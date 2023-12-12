@@ -6,6 +6,17 @@ import numpy as np
 import datetime
 
 def clean_all_hourly_sales_data(masterlist_filepath, input_folder, output_folder):
+    """
+    Cleans hourly sales data for Burger King stores.
+
+    Parameters:
+    - masterlist_filepath (str): Filepath for the master list CSV.
+    - input_folder (str): Folder containing raw hourly sales data CSV files.
+    - output_folder (str): Folder to save cleaned CSV files.
+
+    Returns:
+    None
+    """
     # Read in the master list file
     burger_king = pd.read_csv(masterlist_filepath)
 
@@ -17,25 +28,26 @@ def clean_all_hourly_sales_data(masterlist_filepath, input_folder, output_folder
         # Extract the filename without the extension
         filename = os.path.splitext(os.path.basename(input_file))[0]
 
-        # Construct the output filepath
+        # Create the output filepath
         output_filepath = os.path.join(output_folder, filename + '_CLEAN.csv')
 
         # Read in the hourly sales data
         hourly_sales_burger_king = pd.read_csv(input_file)
 
-        # Merging the files to have CODE in the HourlySales file
+        # Merging the files with the master list to have CODE in the HourlySales file
         df = pd.merge(hourly_sales_burger_king, burger_king[['CODE', '#']], left_on='Store Number', right_on='#', how='left')
         df['CODE'] = df['CODE'].fillna('NNN' + df['Store Number'].astype(str))
 
         # Cleaning file hourly sales for Burger King
+        # Convert QuarterHourBegin to string and extract the hour
         df['QuarterHourBegin'] = df['QuarterHourBegin'].astype(str)
         df['hour_begin'] = df['QuarterHourBegin'].str.partition(':')[0]
 
+        # Extract date components and create a 'business_date' column
         df['date_month'] = df['Business Date'].str.partition('/')[0]
         df['date_day'] = df['Business Date'].str.partition('/')[2]
         df['date_day'] = df['date_day'].str.partition('/')[0]
         df['date_year'] = df['Business Date'].str.rpartition('/')[2]
-
         df['business_date'] = df['date_year']+'-'+df['date_month']+'-'+df['date_day']
 
         # Drop unnecessary columns
